@@ -1,0 +1,208 @@
+---
+title: "RAPORT 1"
+author: "Aleksandra Niedziela"
+date: "2023-04-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 999)
+set.seed(1234)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+```{r load_data_1, echo=FALSE}
+prob_b <- 0.92 * 0.10 + 0.06 * 0.90
+prob_b_a <- (0.92 * 0.10) / (0.92 * 0.10 + 0.06 * 0.90)
+
+population_size <- 100000
+probability_sick <- 0.1
+prob_sick_pos <- 0.92
+prob_healthy_neg <- 0.94
+population <- rbinom(population_size, 1, probability_sick)
+
+
+experiment_size <- 100000
+```
+
+# Wzór Bayesa
+
+Wzór Bayesa to twierdzenie, mówiące na temat prawdopodobieństwa warunkowego:
+
+$$ P(A|B) = \frac{P(B|A)P(A)}{P(B)} $$
+gdzie A i B są zdarzeniami. W naszym przypadku będziemy badać prawdopodobieństwa związane z testowaniem osób na pewną chorobę. Mamy test, który u 92% osób chorych wskaże chorobę, natomiast u 94% zdrowych osób, test jej nie wskaże. Na tę chorobę choruje 10% populacji.
+
+Zastanówmy się najpierw jakie jest prawdopodobieństwo tego, iż u losowo wybranej osoby test wykaże chorobę. Oznaczamy: 
+
+- B: test wykazał chorobę 
+- A: osoba jest chora
+- A': osoba jest zdrowa
+
+Policzymy teraz prawdopodobieństwo całkowite B: 
+
+$$ P(B) = P(B|A)P(A) + P(B|A')P(A') = 0.92 \cdot 0.10 + 0.06 \cdot 0.90 = {`r prob_b * 100`} \%   $$
+Czyli z prawdopodobieństwem `r prob_b * 100` % uzyskamy pozytywny wynik testu u losowo wybranej osoby z populacji. 
+
+Teraz stosując wzór Bayesa, policzmy prawdopodobieństwo, czy losowo osoba jest chora, jeżeli test wykazał u niej chorobę.
+
+$$ P(A|B) = \frac{P(B|A)P(A)}{P(B)} = \frac{0.92 \cdot 0.10}{0.92 \cdot 0.10+ 0.06 \cdot 0.90} = {`r sprintf(prob_b_a * 100, fmt = '%#.2f')`} \%  $$
+``` {r symulation1, eval=TRUE, echo=FALSE, fig.height=4.5}
+pos_test <- 0
+
+for (i in 1:experiment_size){
+  
+  person <- sample(c(0,1), prob = c(0.9, 0.1), 1)
+  if(person == 0){
+      pos_test = pos_test + sample(c(0,1), 
+                                   prob = c(prob_healthy_neg, 1 - prob_healthy_neg), 
+                                   1)
+  }
+  else{
+    pos_test = pos_test + sample(c(0,1), 
+                                 prob = c(1 - prob_sick_pos, prob_healthy_neg), 
+                                 1)
+  }
+}
+
+```
+
+Teraz przeprowadzimy symulacje. Stwórzmy populację liczącą milion osób, w której 10% z nich jest chorych. Będziemy wybierać jedną osobę i poddawać ją testowi, zliczymy ile testów było pozytywnych, a następnie sprawdzimy jaki jest to procent wszystkich przeprowadzonych testów. Eksperyment będziemy powtarzać `r experiment_size`
+
+Otrzymaliśmy `r pos_test` testów pozytywnych, stanowi to `r sprintf((pos_test / experiment_size) * 100, fmt = '%#.2f')`% wszystkich przeprowadzonych testów, co zgadza się z teoretycznymi wyliczeniami.
+
+
+``` {r symulation2, eval=TRUE, echo=FALSE, fig.height=4.5}
+tests <- rep(0, population_size)
+for (i in 1:population_size){
+  person <- population[i]
+  if (person == 0){
+    tests[i] <- sample(c(0,1), prob = c(prob_healthy_neg, 1 - prob_healthy_neg), 
+                       1)
+  }
+  if (person == 1){
+    tests[i] <- sample(c(0,1), 
+                       prob = c(1 - prob_sick_pos, prob_healthy_neg), 
+                       1)
+  }
+}
+
+a <- 0
+
+for (i in 1:population_size){
+  if(tests[i] == 1 & population[i] == 1){
+    a <- a + 1
+  }
+}
+
+```
+
+W drugiej symulacji najpierw przeprowadzimy `r experiment_size` testów, a następnie policzymy ile sprośród pozytywnych testów, prawdziwie pokazało chorobę:
+
+Otrzymaliśmy `r sum(tests)` testów pozytywnych, w tym `r a` u osób chorych, co oznacza iż osoba, która otrzymała pozytywny test jest chora z prawdopodobieństwem `r sprintf((a / sum(tests)) * 100, fmt = '%#.2f')`%. Zgadza się to z wyliczeniami teoretycznymi. 
+
+# Prawdopodobieństwo warunkowe
+
+Państwo Kowalscy mają dwójkę dzieci. Rozpatrujemy cztery sytuacje:
+
+1. Powiedziano ci, że co najmniej jedno z dzieci jest dziewczyną. Jakie jest prawdopodobieństwo, że mają dwie dziewczynki?
+2. Teraz załóżmy, że powiedziano ci, iż starsze dziecko jest dziewczyną. Jakie jest prawdopodobieństwo, że mają dwie dziewczynki?
+3. Tym razem powiedziano ci, że co najmniej jedno z dzieci jest dziewczyną urodzoną we wtorek. Jakie jest prawdopodobieństwo, że mają dwie dziewczynki?
+4. Jakie jest prawdopodobieństwo, że mają dwie dziewczynki gdy wiesz, że co najmniej jedno z dzieci jest dziewczyną urodzoną we wtorek lub w piątek?
+
+Zadałam te pytania kilku osobom, które nie są związane z matematyką. W poniższej tabelce znajdują się ich odpowiedzi: 
+
+ Numer pytania | 1 | 2 | 3 | 4
+:------:|:-----|---|---|---|--------------------:
+ Masażystka   | 50% | 50% | 50% | 50%
+ Księgowa   | 33.3% | 50% | 4.7% | 9.5%
+ Artysta | 50% | 50% | 50% | 50%
+ Uczennica | 25% | 50% | 50% | 50%
+ Chemiczka | 25% | 50% | 50% | 50%
+ Przyszła lekarka | 25% | 50% | 50% | 50%
+ Kolega Artysty | 50% | 50% | 50% | 50%
+ 
+```{r symulation3, eval=TRUE, echo=FALSE, fig.height=4.5}
+experiment_2_size <- 1000000
+
+children1 <- rbinom(experiment_2_size, 1, 0.5)
+children2 <- rbinom(experiment_2_size, 1, 0.5)
+
+# 1
+
+a <- 0
+b_1 <- 0
+
+for (i in 1:experiment_2_size){
+  if (children1[i] == 1 | children2[i] == 1){
+    a <- a + 1
+  }
+  if (children1[i] == 1 & children2[i] == 1){
+    b_1 <- b_1 + 1
+  }
+}
+
+# 2
+
+b_2 <- 0
+
+for (i in 1:experiment_2_size){
+  if (children1[i] == 1 & children2[i] == 1){
+    b_2 <- b_2 + 1
+  }
+}
+
+# 3
+
+days_of_birth_1 <- sample(1:7, experiment_2_size, replace = TRUE)
+days_of_birth_2 <- sample(1:7, experiment_2_size, replace = TRUE)
+
+a_3 <- 0
+b_3 <- 0
+
+for (i in 1:experiment_2_size){
+  if ((children1[i] == 1 & days_of_birth_1[i] == 2) | (children2[i] == 1 & days_of_birth_2[i] == 2)){
+    a_3 <- a_3 + 1
+    if(children1[i] == 1 & children2[i] == 1){
+      b_3 <- b_3 + 1
+    }
+  }
+}
+
+# 4 
+
+a_4 <- 0
+b_4 <- 0 
+
+for (i in 1:experiment_2_size){
+  if ((children1[i] == 1 & days_of_birth_1[i] == 2) | 
+      (children1[i] == 1 & days_of_birth_1[i] == 2) |
+      (children2[i] == 1 & days_of_birth_2[i] == 5) |
+      (children2[i] == 1 & days_of_birth_2[i] == 5)){
+    a_4 <- a_4 + 1
+    if(children1[i] == 1 & children2[i] == 1){
+      b_4 <- b_4 + 1
+    }
+  }
+}
+
+```
+ 
+Przeprowadźmy teraz symulacje. Tworzymy teraz `r experiment_2_size` przykładowych rodzin za każdym razem zliczamy jaki procent pasuje do warunków postawionych w pytaniach: 
+
+1. Zliczamy ile jest rodzin w których co najmniej jedno z dzieci jest dziewczynką, a następnie ile jest rodzin, w którch dwoje dzieci to dziewczynki. Otrzymujemy prawdopodobieństwo: `r sprintf((b_1 / a) * 100, fmt = '%#.2f')`%
+2. Zliczamy ile jest rodzin w których starsze z dzieci jest dziewczynką, a następnie ile jest rodzin, w którch dwoje dzieci to dziewczynki. Otrzymujemy prawdopodobieństwo: `r sprintf((b_2 / sum(children1)) * 100, fmt = '%#.2f')`%
+3. Zliczamy ile jest rodzin w których co najmniej jedno z dzieci jest dziewczynką urodzoną we wtorek, a następnie ile jest rodzin, w którch dwoje dzieci to dziewczynki. Otrzymujemy prawdopodobieństwo: `r sprintf((b_3 / a_3) * 100, fmt = '%#.2f')`%
+4. Zliczamy ile jest rodzin w których co najmniej jedno z dzieci jest dziewczynką urodzoną we wtorek lub w piątek, a następnie ile jest rodzin, w którch dwoje dzieci to dziewczynki. Otrzymujemy prawdopodobieństwo: `r sprintf((b_4 / a_4) * 100, fmt = '%#.2f')`%
+
+### Wnioski
+Na 1. pytanie poprawnie odpowiedziała jedna z badanych osób, na 2. natomiast wszystkie badane osoby. Pokazuje to, iż prawdopodobieństwo warunkowe może być problematyczne i nieintuicyjne. Na pytania 3. i 4. pierwszą odpowiedzią przeważnie było: "Ale co informacja o dniu urodzenia ma tutaj do rzeczy?". Okazauje się, iż ta informacja faktycznie wpływa na prawdopodobieństwo. 
+
+ 
+
+
+
+
+
+
+
