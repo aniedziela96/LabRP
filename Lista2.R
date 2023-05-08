@@ -63,11 +63,7 @@ is_straight <- function(v){
       return(FALSE)
     }
   }
-  if(is_one_colour(v)){
-    return(FALSE)
-  } else {
-    return(TRUE)
-  }
+  return(TRUE)
 }
 
 is_four <- function(v){
@@ -156,6 +152,72 @@ for(i in 1:10000){
   }
 }
 
-a
+hands_ranking <- c('High card', 'Pair', 'Two Pair', 
+           'Three of a kind', 'Straight', 'Flush', 
+           'Full House', 'Four of a kind', 
+           'Straight Flush', 'Royal Flush')
+
+poker <- function(v){
+  hand <- sort_card(v)
+  # checks if there is a pair - if there is there's no possibility for straight, colour etc.
+  if(hand[,2][1] == hand[,2][2] |
+     hand[,2][2] == hand[,2][3] |
+     hand[,2][3] == hand[,2][4] |
+     hand[,2][4] == hand[,2][5]){
+    # checks if there are two pairs
+    if((hand[,2][1] == hand[,2][2] & 
+        hand[,2][3] == hand[,2][4]) |
+       (hand[,2][2] == hand[,2][3] &
+        hand[,2][4] == hand[,2][5])){
+      # checks if there is a three
+      if(hand[,2][1] == hand[,2][3] | hand[,2][3] == hand[,2][5]){
+        # two possible options: full or four
+        if(hand[,2][1] == hand[,2][4] |
+           hand[,2][2] == hand[,2][5]){
+          # checks for four, if it is not, then we have a full
+          return(3) # Four
+        } else {
+          return(4) # Full
+        }
+      }
+      return(8) # Two Pair, there's no Three, so it only can be Two Pair
+    } else if(hand[,2][1] == hand[,2][3] | hand[,2][3] == hand[,2][5]){
+      # Now check for Three, but now without the Two Pair
+      return(7) # Three of a kind
+    }
+    # if there is no Three or Two Pairs, there only can be a One Pair
+    return(9)
+    
+  } else if(is_one_colour(hand)){ #check for straight, flush
+    if(is_straight(hand)){
+      if(hand[,2][1] == 10){
+        return(1) # Royal flush
+      } else {
+        return(2) # Straight flush
+      }
+    } else {
+      return(5) # flush
+    }
+  } else if(is_straight(hand)){
+    return(6) # straight 
+    } else {
+      return(10)
+  }
+}
+
+u <- numeric(100000)
+
+for(i in 1:100000){
+  v <- cards[sample(1:52, 5),]
+  u[i] <- poker(v)
+}
+
+probs <- numeric(0)
+
+for(i in 1:10){
+  probs[i] <- length(which(u == i)) / 1000
+}
+
+probs
 
 
