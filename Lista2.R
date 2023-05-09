@@ -205,9 +205,9 @@ poker <- function(v){
   }
 }
 
-u <- numeric(100000)
+u <- numeric(1000000)
 
-for(i in 1:100000){
+for(i in 1:1000000){
   v <- cards[sample(1:52, 5),]
   u[i] <- poker(v)
 }
@@ -215,7 +215,7 @@ for(i in 1:100000){
 probs <- numeric(0)
 
 for(i in 1:10){
-  probs[i] <- length(which(u == i)) / 1000
+  probs[i] <- length(which(u == i)) / 10000
 }
 
 probs
