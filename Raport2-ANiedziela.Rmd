@@ -215,11 +215,15 @@ Mając karty: 2 kier, 5 karo, 5 pik, 5 trefl, K karo. Widzimy, że mamy trójkę
 
 - Czwórka: Możemy ułożyć czwórki z 12 figur (wszystkie poza 5). Ostatnią kartę wybieramy spośród pozostałych 43 kart. Co daje nam $12 \cdot 43$ = `r 12 * 43` układów
 
-- Full: Figurę tworzącą trójkę w full-u możemy wybrać na 12 sposobów, a ich kolor w zależności od figury. Poza 2 i Królem, dla których mamy tylko jedną możliwość (posiadamy te figury na ręce) mamy po $\binom{4}{3}$ = 4 możliwości, co daje nam $2 + 10 \cdot 4$ = `r 2 + 10 * 4` trójek. Teraz sprawdźmy na ile sposobów możemy ułożyć parę. Postępujemy analogicznie - mamy 12 dostępnych figur, dla 2 i Króla kolor możemy wybrać na $\binom{3}{2}$ = `r choose(3, 2)` sposobów, dla pozostałych 10 figur mamy $10 \cdot \binom{4}{2}$ = `r 10 * choose(4, 2)` możliwości. W sumie otrzymujemy `r 2 * choose(3, 2) + 10 * choose(4, 2)` par, co oznacza że mamy 42 $\cdot$ `r 2 * choose(3, 2) + 10 * choose(4, 2)` full-i.
+- Full: Figurę tworzącą trójkę w full-u możemy wybrać na 12 sposobów, a ich kolor w zależności od figury. Poza 2 i Królem, dla których mamy tylko jedną możliwość (posiadamy te figury na ręce) mamy po $\binom{4}{3}$ = 4 możliwości, co daje nam $2 + 10 \cdot 4$ = `r 2 + 10 * 4` trójek. Teraz sprawdźmy na ile sposobów możemy ułożyć parę. Postępujemy analogicznie - mamy 12 dostępnych figur, dla 2 i Króla kolor możemy wybrać na $\binom{3}{2}$ = `r choose(3, 2)` sposobów, dla pozostałych 10 figur mamy $10 \cdot \binom{4}{2}$ = `r 10 * choose(4, 2)` możliwości. W sumie otrzymujemy `r 2 * choose(3, 2) + 10 * choose(4, 2)` par, co oznacza że mamy 42 $\cdot$ `r 2 * choose(3, 2) + 10 * choose(4, 2)` = `r 42 * 2 * choose(3, 2) + 10 * choose(4, 2)`full-i.
 
 - Kolor: Tutaj również rozpatrzymy przypadki dla poszczególnych kolorów. Dla kiera, pika i trefla mamy $\binom{12}{5}$ możliwości, natomiast dla karo $\binom{11}{5}$ możliwości. Musimy jedynie odjąć liczbę pokerów, które również są kolorem, co daje `r choose(12, 5) + choose(11, 5) - 18` układów
 
-- Strit: Możemy policzyć ile jest stritów, które wykorzystują karty które mamy na ręce, a następnie odjąć je od wszystkich możliwych układów. Będzie tutaj kilka przypadków. Najpierw policzymy ile układów będzie wykorzystywało 2 i którą
+- Strit: Możemy policzyć ile jest stritów, które wykorzystują karty które mamy na ręce, a następnie odjąć je od wszystkich możliwych układów. Będzie tutaj kilka przypadków. Najpierw policzymy ile układów będzie wykorzystywało 2 i którąś z 5.
+Możemy zaczynać albo od asa, albo od 2. Gdy zaczynamy od asa - wybieramy go na 4 sposoby, dwójka jest ustalona, następnie mamy dowolną 3 i 4, a potem korzystamy z jednej z 3 piątek, co daje $4 \cdot 4 \cdot 4 \cdot 3$ = `r 4 * 4 * 4 * 3` możliwości. Gdy zaczynamy od 2 mamy układ (2, 3, 4, 5, 6) i również mamy `r 4 * 4 * 4 * 3` możliwości. Teraz policzmy ile jest układów wykorzystujących jedynie 5. Mamy następujące możliwości: (3, 4, 5, 6, 7), (4, 5, 6, 7, 8), (5, 6, 7, 8, 9). W każdej sytuacji 4 figury mogą być dowolnego koloru, a 5 wybieramy te co mamy na ręce, co daje $3 \cdot 4^4 \cdot 3$ = `r 3 * 4^4 * 3` układów. Układy wykorzystujące Króla to (9, 10, J, Q, K) oraz (10, J, Q, K, A), gdzie 4 z kart są dowolnego koloru, co daje $2 \cdot 4^4$ = `r 2 * 4^4`. Sumując wszytskie możliwości otrzymujemy `r 4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4`.
+Czyli stritów możemy ułożyć `r straight` - `r 4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4` = `r straight - (4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4)`
+
+- Trójka
 
 
 
