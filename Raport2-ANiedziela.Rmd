@@ -169,7 +169,7 @@ poker <- function(v){
 }
 ```
 
-```{r simulation_2, echo=FALSE}
+```{r simulation_2, echo=FALSE, cache=TRUE}
 u <- numeric(1000000)
 
 for(i in 1:1000000){
@@ -207,23 +207,74 @@ Widzimy, że wartości otrzymane w symulacji, są bliskie wyliczeniom teoretyczn
 Znając swoje karty jesteśmy w stanie wyliczyć prawdopodobieństwo naszej wygranej, a dokładniej ile jest silniejszych układów niż te co mamy na ręce.
 
 ### Przykład
+
+
 Mając karty: 2 kier, 5 karo, 5 pik, 5 trefl, K karo. Widzimy, że mamy trójkę, teraz musimy zliczyć liczbę układów, które może posiadać nasz przeciwnik. W talii pozostało 47 kart, przeciwnik losuje z nich swoje 5 na $\binom{47}{5}$ Teraz policzmy ile układów jest silniejszych:
+
+```{r data_r_flush, echo=FALSE}
+e_royal_flush <- 3
+e_straight_flush <- 18
+
+```
 
 - Poker Królewski: 3 układy, poker z kierów, pików i trefli - mając na ręce króla karo, przeciwnik nie może go wykorzystać w swoim układzie.
 
 - Poker: Zobaczmy na każdy z kolorów i zliczmy ile pokerów jesteśmy w stanie ułożyć. Dla każdego koloru mamy 9 układów, ponieważ nie liczymy tego zaczynającego od 10 - to jest poker królewski. Dla kierów odpadają wszystkie wykorzystujące 2 - są takie dwa (A, 2, 3, 4, 5) oraz (2, 3, 4, 5, 6), czyli pozostaje 7 układów. Dla karo odpada 5 układów wykorzystujących 5 oraz 1 układ wykorzystujący króla. Pik, Trefl - mamy 4 układy - odpada po 5 układów wykorzystujących 5. W sumie mamy 7 + 3 + 4 + 4 = 18.
 
-- Czwórka: Możemy ułożyć czwórki z 12 figur (wszystkie poza 5). Ostatnią kartę wybieramy spośród pozostałych 43 kart. Co daje nam $12 \cdot 43$ = `r 12 * 43` układów
+```{r data_four, echo=FALSE}
+e_four <- 10 * 43
 
-- Full: Figurę tworzącą trójkę w full-u możemy wybrać na 12 sposobów, a ich kolor w zależności od figury. Poza 2 i Królem, dla których mamy tylko jedną możliwość (posiadamy te figury na ręce) mamy po $\binom{4}{3}$ = 4 możliwości, co daje nam $2 + 10 \cdot 4$ = `r 2 + 10 * 4` trójek. Teraz sprawdźmy na ile sposobów możemy ułożyć parę. Postępujemy analogicznie - mamy 12 dostępnych figur, dla 2 i Króla kolor możemy wybrać na $\binom{3}{2}$ = `r choose(3, 2)` sposobów, dla pozostałych 10 figur mamy $10 \cdot \binom{4}{2}$ = `r 10 * choose(4, 2)` możliwości. W sumie otrzymujemy `r 2 * choose(3, 2) + 10 * choose(4, 2)` par, co oznacza że mamy 42 $\cdot$ `r 2 * choose(3, 2) + 10 * choose(4, 2)` = `r 42 * 2 * choose(3, 2) + 10 * choose(4, 2)`full-i.
+```
 
-- Kolor: Tutaj również rozpatrzymy przypadki dla poszczególnych kolorów. Dla kiera, pika i trefla mamy $\binom{12}{5}$ możliwości, natomiast dla karo $\binom{11}{5}$ możliwości. Musimy jedynie odjąć liczbę pokerów, które również są kolorem, co daje `r choose(12, 5) + choose(11, 5) - 18` układów
+- Czwórka: Możemy ułożyć czwórki z 10 figur (wszystkie poza 5, 2, K). Ostatnią kartę wybieramy spośród pozostałych 43 kart. Co daje nam $10 \cdot 43$ = `r e_four` układów
+
+```{r data_full, echo=FALSE}
+
+e_full <- 42 * 2 * choose(3, 2) + 10 * choose(4, 2)
+
+```
+
+- Full: Figurę tworzącą trójkę w full-u możemy wybrać na 12 sposobów, a ich kolor w zależności od figury. Poza 2 i Królem, dla których mamy tylko jedną możliwość (posiadamy te figury na ręce) mamy po $\binom{4}{3}$ = 4 możliwości, co daje nam $2 + 10 \cdot 4$ = `r 2 + 10 * 4` trójek. Teraz sprawdźmy na ile sposobów możemy ułożyć parę. Postępujemy analogicznie - mamy 12 dostępnych figur, dla 2 i Króla kolor możemy wybrać na $\binom{3}{2}$ = `r choose(3, 2)` sposobów, dla pozostałych 10 figur mamy $10 \cdot \binom{4}{2}$ = `r 10 * choose(4, 2)` możliwości. W sumie otrzymujemy `r 2 * choose(3, 2) + 10 * choose(4, 2)` par, co oznacza że mamy 42 $\cdot$ `r 2 * choose(3, 2) + 10 * choose(4, 2)` = `r e_full` full-i.
+
+```{r data_flush, echo=FALSE}
+
+e_flush <- choose(12, 5) + choose(11, 5) - 18
+
+```
+
+- Kolor: Tutaj również rozpatrzymy przypadki dla poszczególnych kolorów. Dla kiera, pika i trefla mamy $\binom{12}{5}$ możliwości, natomiast dla karo $\binom{11}{5}$ możliwości. Musimy jedynie odjąć liczbę pokerów, które również są kolorem, co daje `r e_flush` układów
+
+```{r data_straight, echo=FALSE}
+
+e_straight <- straight - (4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4)
+
+```
 
 - Strit: Możemy policzyć ile jest stritów, które wykorzystują karty które mamy na ręce, a następnie odjąć je od wszystkich możliwych układów. Będzie tutaj kilka przypadków. Najpierw policzymy ile układów będzie wykorzystywało 2 i którąś z 5.
 Możemy zaczynać albo od asa, albo od 2. Gdy zaczynamy od asa - wybieramy go na 4 sposoby, dwójka jest ustalona, następnie mamy dowolną 3 i 4, a potem korzystamy z jednej z 3 piątek, co daje $4 \cdot 4 \cdot 4 \cdot 3$ = `r 4 * 4 * 4 * 3` możliwości. Gdy zaczynamy od 2 mamy układ (2, 3, 4, 5, 6) i również mamy `r 4 * 4 * 4 * 3` możliwości. Teraz policzmy ile jest układów wykorzystujących jedynie 5. Mamy następujące możliwości: (3, 4, 5, 6, 7), (4, 5, 6, 7, 8), (5, 6, 7, 8, 9). W każdej sytuacji 4 figury mogą być dowolnego koloru, a 5 wybieramy te co mamy na ręce, co daje $3 \cdot 4^4 \cdot 3$ = `r 3 * 4^4 * 3` układów. Układy wykorzystujące Króla to (9, 10, J, Q, K) oraz (10, J, Q, K, A), gdzie 4 z kart są dowolnego koloru, co daje $2 \cdot 4^4$ = `r 2 * 4^4`. Sumując wszytskie możliwości otrzymujemy `r 4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4`.
-Czyli stritów możemy ułożyć `r straight` - `r 4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4` = `r straight - (4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4)`
+Czyli stritów możemy ułożyć `r straight` - `r 4 * 4 * 4 * 3 + 4 * 4 * 4 * 3 + 3 * 4^4 * 3 + 2 * 4^4` = `r e_straight`
 
-- Trójka
+```{r data_three, echo=FALSE}
+
+e_three <- (8*choose(4, 3) * ((3 * (43 - 7))*2 + 37 + choose(9, 2) * 4^2)) + 
+  (3*40 + choose(10, 2) * 4^2 + 38)
+
+```
+
+- Trójka: Zauważmy, że wygrywające trójki musi tworzyć figura, wyższa od 3. Jest ich 9, kolory dla każdej z nich możemy wybrać na $\binom{4}{3}$ sposoby. Poza Królem, jest tylko jedna kombinacja, jako że jednego mamy już na ręce. Musimy dobrać jeszcze dwie karty. W przypadku, gdy trójkę tworzy król musimy rozważyć kolejne przypadki: gdy jedną z tych kart będzie 2 - wybierzemy ją na 3 sposoby, kolejną kartą może być dowoloną kart, która nie jest 2, jest ich 40, co daje `r 3 * 40` możliwości. Gdy żadna z kart nie będzie 2 lub 5 wybieramy 2 spośród 10 figur, w dowolnym kolorze, co daje nam $\binom{10}{2} * 4^2$. Gdy jedna karta będzie 5, jako że w tali pozostała tylko jedna 5, druga karta może być dowolna, jednak w sytuacji, jak jedna karta była 2 zliczyliśmy 3 z tych sytuacji, więc zostaje nam 41 - 3 = 38 możliwości. Teraz policzmy ile jest możliwości gdy trójki nie tworzą Króle, a 6, 7, 8, 9, 10, J, Q lub A. Rozważmy przypadki: dwie karty to 2 i K - mamy $3 \cdot 3$ = 9 możliwości, 2 występuje, ale nie ma Króla, ani 5. Z 43 odrzucamy 7 kart (Króle, 5 oraz figurę która tworzy trójkę)  - mamy $3 \cdot (43 - 7)$, K występuje, ale nie ma 2, ani 5 - liczba możliwości jest taka sama jak w poprzednim przypadku. Jedna z dwóch kart to 5, a druga nie jest 2 ani Królem. Pozostaje 43 - 6 = 37 kart do wyboru. Gdy żadna z dwóch kart nie jest ani 5, ani 2, ani Królem mamy $\binom{9}{2} \cdot 4^2$. Sumując mamy `r e_three` możliwości
+
+```{r win_lose, echo=FALSE}
+
+e_all <- choose(48,5)
+lose <- e_royal_flush + e_straight_flush + e_four + e_full + 
+  e_flush + e_straight + e_three
+win <- e_all - lose
+
+```
+
+Każda inna kombinacja nie wymieniona wyżej będzie słabsza od naszej ręki. Co oznacza, że wygrywamy w `r win` przypadkach, co daje `r sprintf((win / e_all) * 100, fmt = '%#.3f')` % prawdopodobieństwa wygranej. 
+
+Widzimy, że dla każdego układu możemy obliczyć prawdopodobieństwo wygranej, obliczenia się komplikują, gdy w pokera gra większa liczba graczy. Jest to gra oparta na prawdopodobieństwie i da się ustalić (nie wiem czy skutecznie, poker to także gra psychologiczna) jakie mamy sznase na wygraną oraz jaką stawkę obstawić.
 
 
 
