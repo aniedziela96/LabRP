@@ -1,0 +1,15 @@
+---
+title: "Raport 3"
+author: "Aleksandra Niedziela"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem kolekcjonera kuponów
+
+
+
