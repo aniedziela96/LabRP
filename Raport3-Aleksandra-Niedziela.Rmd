@@ -142,9 +142,9 @@ $$P(X_n \ge \frac{3n}{4}) \le \frac{\frac{n}{2}}{\frac{3n}{4}} = \frac{2}{3}$$
 Możemy wyliczyć dokładne prawdopodobieństwa dla ustalonej ilości rzutów, a następnie zauważyć, że za każdym razem są one ograniczone przez $\frac{2}{3}$
  
 ```{r symulation_3, eval=TRUE, echo=FALSE}
-n_values <- c(4, 10, 50, 100)
+n_values <- c(4, 10, 20, 50, 100)
 prob <- c()
-for (i in 1:4){
+for (i in 1:5){
   n <- n_values[i]
   prob <- c(prob, pbinom((0.75 * n) - 1, n, 0.5, lower.tail = FALSE))
 }
@@ -168,19 +168,110 @@ a <- seq(0, 4, 0.01)
 prob <- pnorm(a, mean = 2, sd = 1, lower.tail = FALSE)
 markow <- 2/a
 
-data_4 <- data.frame(a, prob, markow)
-
-ggplot(data_4, aes(x = a)) +
-  geom_line(aes(y = prob), 
-             linewidth = 1, 
-            color = "red") +
-  geom_line(aes(y = markow), 
-            color = "blue", 
-            linewidth = 1) +
-  ylim(c(0, 1)) +
-  labs(x = " ", y = " ", title = "Porównanie oszacowania, z wartością ogona dystrybuanty")
+plot(a, prob, ylim = c(0,1.1), type = "l", lwd = 2,
+     xlab = " ",
+     ylab = " ",
+     main = "Porównanie oszacowania, z wartością dokładną") 
+lines(a, markow, type = "l", lwd = 2, col = "red")
+legend(2.75, 1.01, legend = c("Wartość dokładna", "Markow"), 
+       col = c("black", "red"),
+       lty = 1,
+       cex = 0.75)
 ```
  
+# Nierówność Czebyszewa 
+
+Dla dowolnego $a > 0$ mamy:
+
+$$P(|X - E[X]| \ge a) \le \frac{Var[X]}{a^2}$$
+
+Korzystając z powyższej nierówności możemy ponownie oszacować prawdopodobieństwo wyrzucenia $\frac{3n}{4}$ orłów w $n$ rzutach symetryczną monetą. Wiemy, że $Var[X] = np(1-p)$. Mamy:
+
+$$P(|X - E[X]| \ge a) = P(X \ge a + E[X]) + P(X \le -a + E[X])$$
+
+Chcemy, aby $a + E[X] = \frac{3n}{4}$, więc $a = \frac{n}{4}$. Ponieważ patrzymy tutaj na rozkład Bernoulliego, to mamy: 
+$$P(X \ge a + E[X]) + P(X \le -a + E[X]) = 2P(X \ge \frac{3n}{4}) \le \frac{Var[X]}{(\frac{n}{4})^2} = \frac{n \cdot 0.5 \cdot 0.5}{\frac{n^2}{16}} = \frac{4}{n}$$
+Stąd prawdopodobieństwo wyrzucenia $\frac{3n}{4}$ orłów możemy oszacować przez $\frac{2}{n}$
+
+W przeciwieństwie do ograniczenia wynikającego z nierówności Markowa wynik jest zależny od ilości powtórzeń eksperymentu.
+
+Spójrzmy teraz na wykres, gdzie dla rozkładu normalnego porównamy oszacowanie z wartością dokładną ogona dystrybuanty. Dla rozkładu normalnego mamy $Var[X] = \sigma^2$. 
+
+```{r plot_3, eval=TRUE, echo=FALSE, fig.height=4, fig.align='center'}
+mu <- 2
+s <- 1
+
+a <- seq(0, 4, 0.01)
+prob <- pnorm(a + mu, mean = mu, sd = s, lower.tail = FALSE) + 
+  pnorm(mu - a, mean = mu, sd = s)
+czebyszew <- s/(a^2)
 
 
+plot(a, prob, ylim = c(0,1.1), type = "l", lwd = 2,
+     xlab = " ",
+     ylab = " ",
+     main = "Porównanie oszacowania, z wartością dokładną") 
+lines(a, czebyszew, type = "l", lwd = 2, col = "red")
+legend(2.5, 1, legend = c("Wartość dokładna", "Czebyszew"), 
+       col = c("black", "red"),
+       lty = 1,
+       cex = 0.75)
+  
+```
+
+Korzystatjąc z nierówności Markowa, możemy oszacować wartość $P(X \ge 2nH_n)$, gdzie $X$ to zmienna losowa oznaczająca ilość pudełek, które musimy kupić by wygrać nagrodę (problem kolekcjonera kuponów), natomiast $H_n = \sum_{i = 1}^{n}\frac{1}{i}$. Mamy $E[X] = n \sum_{i = 1}^{n}\frac{1}{i}$
+
+$$ P(X \ge 2nH_n) \le \frac{E[X]}{a} = \frac{n \sum_{i = 1}^{n}\frac{1}{i}}{2n \sum_{i = 1}^{n}\frac{1}{i}} = \frac{1}{2}$$
+
+Teraz korzystając z nierówności Czebyszewa oszacujmy $P(|X - nH_n| \ge nH_n)$
+Aby policzyć $Var[X]$ skorzystamy z faktu, iż $Var[X] = \sum_{i = 1}^{n}Var[X_i]$. Wiemy, iż zmienne $X_i$ mają rozkład geometryczny, stąd $Var[X_i] = \frac{(1-p)}{p^2}$
+
+$$ P(|X - nH_n| \ge nH_n) \le \frac{Var[X]}{a^2} = \frac{\sum_{i = 1}^{n}Var[X_i]}{(nH_n)^2} \le \frac{\pi^2n^2}{6n^2H_n^2} \le \frac{\pi^2}{6 (\ln n)^2}$$
+
+Porównajmy otrzymane oszacowania
+
+```{r plot_4, eval=TRUE, echo=FALSE, fig.height=4, fig.align='center'}
+
+n <- 2:1000
+markow <- rep(0.5, 999)
+czebyszew <- pi^2/(6*(log(n)))
+
+
+plot(n, markow, ylim = c(0,1.1), type = "l", lwd = 2,
+     xlab = " ",
+     ylab = " ",
+     main = "Porównanie oszacowania nierównością Markowa i Czebyszewa") 
+lines(n, czebyszew, type = "l", lwd = 2, col = "red")
+legend(650, 1, legend = c("Markow", "Czebyszew"), 
+       col = c("black", "red"),
+       lty = 1,
+       cex = 0.75)
+  
+```
+
+Widzimy, że dla małych wartości $n$ lepsze oszacowanie daje nam nierówność Markowa, natomiast wraz ze wzrostem $n$ nierówność Czebyszewa daje dokładniejsze przybliżenia. 
+
+# Średnia, dyspersja, mediana 
+
+Jeśli X jest zmienną losową o średniej $\mu$ odchyleniu standardowym $\sigma$ i medianie $m$ wtedy:
+
+$$|\mu - m| \le \sigma$$
+
+Aby sprawdzić, czy nierówność ta jest prawdziwa dla estymatorów mediany, średniej i odchylenia przeprowadźmy prostą symulację. Wybierzmy próbę 200 mężczyzn z populacji i przyjrzyjmy się estymatorom. Losujemy wartości z rozkładu normalnegoz parametrami $\mu$ = 178, $\sigma$ = 5, jako że tak możemy modelować zmienną losową opisującą wzrost w populacji. 
+
+```{r symulation_4, echo = FALSE}
+men <- round(rnorm(200, mean = 178, sd = 5))
+mean_est <- mean(men)
+median_est <- median(men)
+sd_est <- sd(men) 
+dif <- abs(mean_est - median_est)
+```
+
+Otrzymujemy: 
+
+- $\mu$ = `r sprintf(mean_est, fmt = '%#.3f')`
+- $m$ = `r sprintf(median_est, fmt = '%#.3f')`
+- $\sigma$ = `r sprintf(sd_est, fmt = '%#.3f')`
+
+$$|\mu - m| = `r sprintf(dif, fmt = '%#.2f')` \le `r sprintf(sd_est, fmt = '%#.2f')` = \sigma$$
 
