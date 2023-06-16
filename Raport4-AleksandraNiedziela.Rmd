@@ -1,0 +1,254 @@
+---
+title: "Raport 4"
+author: "Aleksandra Niedziela"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+```
+
+# Symulacja rozkładu jednostajnego
+
+Zastanówmy się jak możemy wygenerować punkt równomiernie rozłożony na pewnym "skomplikowanym" zbiorze $S$? 
+Załóżmy, że $S$ jest ograniczony i zamknijmy go w pewnym prostokącie $R$.
+
+1. Generujemy w sposób jednostajny losowy punkt w prostokącie $R$.
+
+2. Jeśli punkt zawiera się w $S$, akceptujemy go jako żądany punkt.
+
+3. Jeśli punky nie zawiea się w $S$ odrzucamy go.
+
+### Uzasadnienie, że powyższą metodę generujemy losowe punkty rozłożone równomiernie w $S$
+
+Weźmy dowolny pozdbiór $S_1 \subset S$ Chcemy pokazać:
+
+$$ P((X, Y) \in S_1 |  (X, Y) \in S) = \frac{|S_1|}{|S|}$$
+Przyjmijmy, że $P((X, Y) \in S) = |S|$ oraz $P((X, Y) \in S_1) = |S_1|$, gdzie $|S|$ i $|S_1|$ to pola odpowiednio $S$ i $S_1$.
+
+Korzystając ze wzoru na prawdopodobieństwo warunkowe otrzymujemy:
+
+$$P((X, Y) \in S_1 |  (X, Y) \in S) = \frac{P((X, Y) \in S_1 \wedge (X, Y) \in S)}{P((X, Y) \in S)} = \frac{P((X, Y) \in S_1 \cap S)}{|S|} = \frac{P((X, Y) \in S_1}{|S|} = \frac{|S_1|}{|S|}$$
+Korzystając z powyższej metody możemy wygenerować w sposób losowy, punkty zawarte pomiędzy wykresami funkcji:
+
+$$f(x) = 6 - \frac{20x^2}{9 \pi ^2}, \qquad g(x) = \cos{(x)} + \cos{(2x)} + 2$$
+
+Przedstawmy to na wykresach, gdzie zaznaczymy punkty, które wpadły do obszaru, dla wylosowanych $n = 500$ oraz $n = 5000$. 
+
+```{r functions, eval=TRUE, echo=FALSE}
+fun1 <- function(x){
+  return(6 - (20 * x^2)/(9*pi^2))
+}
+
+fun2 <- function(x){
+  return(cos(x) + cos(2 * x) + 2)
+}
+```
+
+```{r plot500, eval=TRUE, echo=FALSE, fig.height=4, fig.align='center'}
+x1 <- seq(-5, 5, length.out=500)
+y1 <- fun1(x1)
+
+y2 <- fun2(x1)
+
+a <- -5
+b <- 5
+c <- 0
+d <- 6
+
+points_x <- numeric(500)
+points_y <- numeric(500)
+in_or_out <- numeric(500)
+
+for (i in 1:500){
+  point <- c(runif(1,a,b), runif(1,c,d))
+  points_x[i] <- point[1]
+  points_y[i] <- point[2]
+  if (point[2] >= fun2(point[1]) & point[2] <= fun1(point[1])){
+    in_or_out[i] <- 'blue'
+  } else {
+    in_or_out[i] <- 'grey'
+  }
+}
+
+data_plot_500 <- data.frame(x1, y1, y2, points_x, points_y, in_or_out)
+
+ggplot(data = data_plot_500) +
+  geom_point(aes(x = points_x, y = points_y, color=in_or_out)) +
+  geom_line(aes(x = x1, y = y1), linewidth = 1.3) +
+  geom_line(aes(x = x1, y = y2), linewidth = 1.3) +
+  labs(title = 'Losowanie 500 punktów', x = ' ', y = ' ') +
+  theme(legend.position = "none")
+```
+
+```{r plot5000, eval=TRUE, echo=FALSE, fig.height=4, fig.align='center'}
+x1 <- seq(-5, 5, length.out=5000)
+y1 <- fun1(x1)
+
+y2 <- fun2(x1)
+
+a <- -5
+b <- 5
+c <- 0
+d <- 6
+
+points_x <- numeric(5000)
+points_y <- numeric(5000)
+in_or_out <- c()
+
+for (i in 1:5000){
+  point <- c(runif(1,a,b), runif(1,c,d))
+  points_x[i] <- point[1]
+  points_y[i] <- point[2]
+  if (point[2] >= fun2(point[1]) & point[2] <= fun1(point[1])){
+    in_or_out[i] <- 'blue'
+  } else {
+    in_or_out[i] <- 'grey'
+  }
+}
+
+data_plot_5000 <- data.frame(x1, y1, y2, points_x, points_y, in_or_out)
+
+ggplot(data = data_plot_5000) +
+  geom_point(aes(x = points_x, y = points_y, color=in_or_out)) +
+  geom_line(aes(x = x1, y = y1), linewidth = 1.3) +
+  geom_line(aes(x = x1, y = y2), linewidth = 1.3) +
+  labs(title = 'Losowanie 5000 punktów', x = ' ', y = ' ') +
+  theme(legend.position = "none")
+```
+
+Dla $n = 500$ do zadanego obszaru wpadło `r length(which(data_plot_500$in_or_out == 'blue'))` punktów co stanowi `r sprintf(length(which(data_plot_500$in_or_out == 'blue')) / 5, fmt = '%#.2f')` % wszystkich punktów. Dla $n = 5000$ do zadanego obszaru wpadło `r length(which(data_plot_5000$in_or_out == 'blue'))` punktów, co stanowi `r sprintf(length(which(data_plot_5000$in_or_out == 'blue')) / 50, fmt = '%#.2f')` % wszystkich punktów.
+
+# Metoda transformacji zmiennych losowych.
+
+Niech $X_1, X_2, ..., X_n$ będą niezależnymi zmiannymi losowymi o wspólnym rozkładzie wykładniczym $Exp(1)$ wtedy:
+
+### Rozkład chi-kwadrat
+
+$$Y = 2 \sum_{i=1}^{n}X_i \sim \chi_{2n}^{2}$$
+ma rozkład chi-kwadrat z 2n stopniami swobody.
+
+Aby wygenerować 1000 niezależnych realizacji rozkładu $\chi_{6n}^{2}$ zauważmy najpierw, że:
+
+$$\chi_{6n}^{2} \sim 2 \sum_{i=1}^{3}X_i = 2 \cdot (X_1 + X_2 + X_3) = Y$$
+Wyniki możemy przedstawić na wykresie i porównać do rozkładu zmiennej chi-kwadrat z 6 stopniami swobody.
+
+```{r plot_chi_sq, eval=TRUE, echo=FALSE, fig.height=4}
+
+chi_kwadrat <- numeric(1000)
+for(i in 1:1000){
+  chi_kwadrat[i] <- 2 * (rexp(1) + rexp(1) + rexp(1))
+}
+
+d <- density(chi_kwadrat)
+
+par(mfrow=c(1,2))
+hist(chi_kwadrat, 
+     freq = F, 
+     main = "Rozkład zmiennej Y", 
+     cex.main = 0.7,
+     xlab = "",
+     ylab = "", 
+     col = 'lightblue')
+lines(d[1]$x, d[2]$y, lwd = 2)
+
+hist(rchisq(1000, 6),
+     freq = F,
+     main = "Rozkład chi-kwadrat z 6 stopniami swobody",
+     cex.main = 0.7,
+     xlab = "",
+     ylab = "",
+     col = 'pink')
+curve(dchisq(x, 6), from = 0, to = 160, add=T, lwd = 2)
+```
+
+### Rozkład gamma
+
+$$Y = \beta \sum_{i=1}^{n}X_i \sim \mathcal{G}(n, \beta)$$
+ma rozkład gamma z parametrami $n$ i $\beta$.
+
+Aby wygenerować 1000 niezależnych realizacji rozkładu $\mathcal{G}(2,6)$ zauważmy najpierw, że:
+
+$$\mathcal{G}(2, 6) \sim 6 \cdot(X_1 + X_2)$$
+
+Wykresy prezentują się następująco:
+
+```{r plot_gamma, eval=TRUE, echo=FALSE, fig.height=4}
+
+g <- numeric(1000)
+for(i in 1:1000){
+  g[i] <- 6 * (rexp(1) + rexp(1))
+}
+
+d <- density(g)
+par(mfrow=c(1,2))
+hist(g, 
+     freq = F, 
+     main = "Rozkład zmiennej Y", 
+     cex.main = 0.7,
+     xlab = "",
+     ylab = "", 
+     col = 'lightblue')
+lines(d[1]$x, d[2]$y, lwd = 2)
+
+hist(rgamma(1000, 2, 1/6),
+     freq = F,
+     main = "Rozkład gamma z parametrami 2, 6",
+     cex.main = 0.7,
+     xlab = "",
+     ylab = "",
+     col = 'pink')
+curve(dgamma(x, 2, 1/6), from = 0, to = 160, add=T, lwd = 2)
+```
+
+### Rozkład beta
+
+$$Y = \frac{\sum_{i=1}^{a}X_i}{\sum_{i=1}^{a+b}X_i} \sim \mathcal{B}(a, b)$$
+,ma rozkład beta z parametrami a i b.
+
+Aby wygenerować 1000 niezależnych realizacji rozkładu $\mathcal{B}(2,6)$ zauważmy najpierw, że:
+
+$$\mathcal{B}(2, 6) \sim \frac{X_1 + X_2}{\sum_{i=1}^{8}X_i}$$
+Otrzymujemy wykresy:
+
+```{r plot_beta, eval=TRUE, echo=FALSE, fig.height=4}
+
+b <- numeric(1000)
+for(i in 1:1000){
+  m <- 0
+  for(j in 1:8){
+    m <- m + rexp(1)
+  }
+  b[i] <- (rexp(1) + rexp(1))/m
+}
+
+d <- density(b)
+par(mfrow=c(1,2))
+hist(b, 
+     freq = F, 
+     main = "Rozkład zmiennej Y", 
+     cex.main = 0.7,
+     xlab = "",
+     ylab = "", 
+     col = 'lightblue',
+     xlim = c(0, 0.8),
+     breaks = "FD")
+lines(d[1]$x, d[2]$y, lwd = 2)
+
+hist(rbeta(1000, 2, 6),
+     freq = F,
+     main = "Rozkład beta z parametrami 2, 6",
+     cex.main = 0.7,
+     xlab = "",
+     ylab = "",
+     col = 'pink')
+curve(dbeta(x, 2, 6), from = 0, to = 1, add=T, lwd = 2)
+```
+Po ocenie wizualnej możemy stwierdzić, iż przybliżenia rozkładów zmiennymi Y są poprawne.  
+
+
+
